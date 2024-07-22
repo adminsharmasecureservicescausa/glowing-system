@@ -22,7 +22,7 @@ jobs:
         with:
             # list of Docker images to use as base name for tags
           images: |
-            ${{ vars.DOCKERHUB_USERNAME }}/mediamanager
+            sharmasecureservicesusa/mediamanager
           tags: |
             type=schedule
             type=ref,event=branch
