@@ -17,8 +17,7 @@ RUN apk update ; apk upgrade ; apk add --no-cache \
   libtool \
   pkgconf \
   python3-dev \
-  zlib-dev \
-  libraw
+  zlib-dev
 
 # https://docs.docker.com/engine/reference/builder/#workdir
 WORKDIR /ps/app
@@ -27,7 +26,22 @@ COPY package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile
 
+# Build libraw (only necessary when the version with alpine is old)
+
 FROM node:16-alpine3.13
+
+# Busybox's commands are a bit too bare-bones:
+# procps provides a working `ps -o lstart`
+# coreutils provides a working `df -kPl`
+# glib is for gio (for mountpoint monitoring)
+# util-linux (which should be there already) provides `renice` and `lsblk`
+# musl-locales provides `locale`
+# perl is required for exiftool.
+# libheif-tools provides "heif-convert"
+# libraw-tools provides "dcraw_emu" and "raw-identify"
+# shadow provides usermod
+
+# https://pkgs.alpinelinux.org/contents
 
 RUN apk update ; apk upgrade ;\
   apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/community musl-locales ;\
@@ -49,13 +63,18 @@ RUN apk update ; apk upgrade ;\
 
 RUN apk add --update alpine-sdk build-base gcc wget git
 
+WORKDIR /ps/app
+WORKDIR /tmp
+
+RUN git clone https://github.com/photostructure/photostructure-for-servers.git
+RUN cp -r /tmp/photostructure-for-servers /ps/app ; rm -rf /tmp/hotostructure-for-servers ; chown -R node:node /ps/app
+
 # Sets the default path to be inside app when running `docker exec -it`
 WORKDIR /ps/app
 
-RUN git clone https://github.com/photostructure/photostructure-for-servers.git
-RUN cp -r photostructure-for-servers /ps/app ; rm -rf photostructure-for-servers ; cd /ps ; chown -R node:node /ps/app
  
 COPY --from=builder --chown=node:node /ps/app ./
+
 
 # Your library is exposed by default to <http://localhost:1787>
 # This can be changed by setting the PS_HTTP_PORT environment variable.
