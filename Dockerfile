@@ -77,12 +77,7 @@ RUN apk update ; apk upgrade ;\
   tini \
   util-linux 
 
-RUN apk add --virtual build-essential
-alpine-sdk
-build-base
-gcc
-wget
-git
+RUN apk add --update alpine-sdk build-base gcc wget git
 
 # Sets the default path to be inside app when running `docker exec -it`
 WORKDIR /ps/app
