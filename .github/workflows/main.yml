@@ -15,30 +15,75 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
+inputs:
+  allow:
+    description: "network.host,security.insecure"
+    required: false
+  file:
+    description: 'Dockerfile'
+    required: true
+    default: 'Dockerfile'
+  build-args:
+    description: "List of build-time variables"
+    required: false
+  organization:
+    description: 'Organization'
+    required: true
+    default: 'sharmasecureservicesusa'
+  repository:
+    description: 'Repository'
+    required: true
+    deault: 'adminsharmasecureservicescausa/glowing-system'
+  registry:
+    description: 'Docker registry'
+    required: true
+    default: 'docker.io'
+  target:
+    description: "Sets the target stage to build"
+    required: false
+    default: ''
+  platforms:
+    description: "List of target platforms for build (e.g. linux/amd64,linux/arm64,linux/riscv64,linux/ppc64le,linux/s390x,etc)"
+    required: true
+    default: 'linux/amd64'
+  provenance:
+    description: "Generate provenance attestation for the build"
+    required: false
+  image_name:
+    description: "Image name (excluding registry). Defaults to {{$organization/$repository}}."
+    required: true
+    default: 'mediamanager'
+  login:
+    description: 'Docker login'
+    required: true
+    default: "${{ vars.DOCKERHUB_USERNAME }}"
+  password:
+    description: 'Docker password'
+    required: true
+    default: "${{ secrets.DOCKERHUB_TOKEN }}"
+  cache-from:
+    description: "List of external cache sources for buildx (e.g., user/app:cache, type=local,src=path/to/dir)"
+    required: true
+    default: type=gha
+  cache-to:
+    description: "List of cache export destinations for buildx (e.g., user/app:cache, type=local,dest=path/to/dir)"
+    required: true
+    default: type=gha,mode=max
+    
+      - name: Docker build and push
+        id: build
+        uses: cloudposse/github-action-docker-build-push@1.16.0
         with:
-            # list of Docker images to use as base name for tags
-          images: |
-            sharmasecureservicesusa/mediamanager
-          tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha      
+          registry: registry.hub.docker.com
+          organization: "${{ github.event.repository.owner.login }}"
+          repository: "${{ github.event.repository.name }}"
+          login: "${{ vars.DOCKERHUB_USERNAME }}"
+          password: "${{ secrets.DOCKERHUB_TOKEN }}"
+          platforms: linux/amd64
+          cache-from: "type=registry,ref=registry.hub.docker.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}:cache"
+          cache-to: "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=registry.hub.docker.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}:cache"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+          
       
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+
           
