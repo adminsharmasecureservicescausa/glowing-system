@@ -4,75 +4,71 @@ on:
   push:
     branches:
       - "main"
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 inputs:
-  allow:
+  - allow:
     description: "network.host,security.insecure"
     required: false
-  file:
+  - file:
     description: 'Dockerfile'
     required: true
     default: 'Dockerfile'
-  build-args:
+  - build-args:
     description: "List of build-time variables"
     required: false
-  organization:
+  - organization:
     description: 'Organization'
     required: true
     default: 'sharmasecureservicesusa'
-  repository:
+  - repository:
     description: 'Repository'
     required: true
     deault: 'adminsharmasecureservicescausa/glowing-system'
-  registry:
+  - registry:
     description: 'Docker registry'
     required: true
     default: 'docker.io'
-  target:
+  - target:
     description: "Sets the target stage to build"
     required: false
     default: ''
-  platforms:
+  - platforms:
     description: "List of target platforms for build (e.g. linux/amd64,linux/arm64,linux/riscv64,linux/ppc64le,linux/s390x,etc)"
     required: true
     default: 'linux/amd64'
-  provenance:
+  - provenance:
     description: "Generate provenance attestation for the build"
     required: false
-  image_name:
+  - image_name:
     description: "Image name (excluding registry). Defaults to {{$organization/$repository}}."
     required: true
     default: 'mediamanager'
-  login:
+  - login:
     description: 'Docker login'
     required: true
     default: "${{ vars.DOCKERHUB_USERNAME }}"
-  password:
+  - password:
     description: 'Docker password'
     required: true
     default: "${{ secrets.DOCKERHUB_TOKEN }}"
-  cache-from:
+  - cache-from:
     description: "List of external cache sources for buildx (e.g., user/app:cache, type=local,src=path/to/dir)"
     required: true
     default: type=gha
-  cache-to:
+  - cache-to:
     description: "List of cache export destinations for buildx (e.g., user/app:cache, type=local,dest=path/to/dir)"
     required: true
     default: type=gha,mode=max
-    
-      - name: Docker build and push
+  
+jobs:
+    context:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
         id: build
-        uses: cloudposse/github-action-docker-build-push@1.16.0
+        uses: cloudposse/github-action-docker-build-push@main
         with:
           registry: registry.hub.docker.com
           organization: "${{ github.event.repository.owner.login }}"
@@ -83,7 +79,9 @@ inputs:
           cache-from: "type=registry,ref=registry.hub.docker.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}:cache"
           cache-to: "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=registry.hub.docker.com/${{ github.event.repository.owner.login }}/${{ github.event.repository.name }}:cache"
 
-          
-      
+      outputs:
+        image: ${{ steps.build.outputs.image }}
+        tag: ${{ steps.build.outputs.tag }}
+
 
           
