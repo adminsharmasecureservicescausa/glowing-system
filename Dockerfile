@@ -17,7 +17,8 @@ RUN apk update ; apk upgrade ; apk add --no-cache \
   libtool \
   pkgconf \
   python3-dev \
-  zlib-dev
+  zlib-dev \
+  libraw
 
 # https://docs.docker.com/engine/reference/builder/#workdir
 WORKDIR /ps/app
@@ -26,25 +27,7 @@ COPY package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile
 
-# Build libraw (only necessary when the version with alpine is old)
-WORKDIR /tmp
-
-RUN wget https://www.libraw.org/data/LibRaw-0.20.2.tar.gz && tar xvzf LibRaw-0.20.2.tar.gz && cd LibRaw-0.20.2 && ./configure --enable-static --disable-openmp && make -j24 && /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/dcraw_emu samples/bin_dcraw_emu-dcraw_emu.o lib/libraw.la -ljpeg -lz -lm && /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/raw-identify samples/bin_raw_identify-raw-identify.o lib/libraw.la -ljpeg -lz -lm && ldd bin/dcraw_emu && strip bin/dcraw_emu && strip bin/raw-identify && mkdir -p /ps/app/bin && cp dcraw_emu raw-identify /ps/app/bin && chmod 755 /ps/app/bin/*
-
 FROM node:16-alpine3.13
-
-# Busybox's commands are a bit too bare-bones:
-# procps provides a working `ps -o lstart`
-# coreutils provides a working `df -kPl`
-# glib is for gio (for mountpoint monitoring)
-# util-linux (which should be there already) provides `renice` and `lsblk`
-# musl-locales provides `locale`
-# perl is required for exiftool.
-# libheif-tools provides "heif-convert"
-# libraw-tools provides "dcraw_emu" and "raw-identify"
-# shadow provides usermod
-
-# https://pkgs.alpinelinux.org/contents
 
 RUN apk update ; apk upgrade ;\
   apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/community musl-locales ;\
