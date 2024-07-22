@@ -27,22 +27,22 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Build libraw (only necessary when the version with alpine is old)
-# WORKDIR /tmp
+WORKDIR /tmp
 
-# RUN wget https://www.libraw.org/data/LibRaw-0.20.2.tar.gz && \
-#   echo "dc1b486c2003435733043e4e05273477326e51c3ea554c6864a4eafaff1004a6 LibRaw-0.20.2.tar.gz" | sha256sum --check && \
-#   tar xvzf LibRaw-0.20.2.tar.gz && \
-#   cd LibRaw-0.20.2 && \
-#   ./configure --enable-static --disable-openmp && \
-#   make -j24 && \
-#   /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/dcraw_emu samples/bin_dcraw_emu-dcraw_emu.o lib/libraw.la -ljpeg -lz -lm && \
-#   /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/raw-identify samples/bin_raw_identify-raw-identify.o lib/libraw.la -ljpeg -lz -lm && \
-#   ldd bin/dcraw_emu && \
-#   strip bin/dcraw_emu && \
-#   strip bin/raw-identify && \
-#   mkdir -p /ps/app/bin && \
-#   cp dcraw_emu raw-identify /ps/app/bin && \
-#   chmod 755 /ps/app/bin/*
+RUN wget https://www.libraw.org/data/LibRaw-0.20.2.tar.gz && \
+  echo "dc1b486c2003435733043e4e05273477326e51c3ea554c6864a4eafaff1004a6 LibRaw-0.20.2.tar.gz" | sha256sum --check && \
+  tar xvzf LibRaw-0.20.2.tar.gz && \
+  cd LibRaw-0.20.2 && \
+  ./configure --enable-static --disable-openmp && \
+  make -j24 && \
+  /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/dcraw_emu samples/bin_dcraw_emu-dcraw_emu.o lib/libraw.la -ljpeg -lz -lm && \
+  /bin/bash ./libtool --tag=CXX --mode=link g++ -all-static -g -O2 -o bin/raw-identify samples/bin_raw_identify-raw-identify.o lib/libraw.la -ljpeg -lz -lm && \
+  ldd bin/dcraw_emu && \
+   strip bin/dcraw_emu && \
+  strip bin/raw-identify && \
+  mkdir -p /ps/app/bin && \
+  cp dcraw_emu raw-identify /ps/app/bin && \
+  chmod 755 /ps/app/bin/*
 
 FROM node:16-alpine3.13
 
